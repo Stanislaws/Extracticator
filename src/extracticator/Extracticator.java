@@ -19,9 +19,6 @@
 package extracticator;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.Scanner;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import javax.swing.*;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.text.DefaultEditorKit;
@@ -37,12 +34,15 @@ public class Extracticator extends JFrame{
     private final JMenuItem New, Open, Save, SaveAs, Exit, Cut, Copy, Paste, 
             SelectAll, About, Extract, Options;
     private final JScrollPane oscroll;
-    private JTextArea output, aoutput;
+    private final JTextArea output, aoutput;
     
     private final JLabel statusbar = new JLabel("Ready");
     
     private final JPanel jp = new JPanel();
     
+    /**
+     * Sets up the GUI and actionable events
+     */
     Extracticator(){
         statusbar.setOpaque(true);
         statusbar.setBackground(Color.white);
@@ -156,6 +156,8 @@ public class Extracticator extends JFrame{
         
         Bar.add(Help);
         
+        aoutput = new JTextArea(10,5);
+        
         output = new JTextArea(25,50);
         output.setLineWrap(true);
         
@@ -249,8 +251,11 @@ public class Extracticator extends JFrame{
         });
     }
     
+    /**
+     * Shows information about the author and the license
+     */
     public void about(){
-        aoutput = new JTextArea(10,5);
+        
         aoutput.setEditable(false);
         aoutput.setText("Extracticator - extracts email addresses from "
                         + "mailing lists\n" +
@@ -280,6 +285,9 @@ public class Extracticator extends JFrame{
                 JOptionPane.PLAIN_MESSAGE);        
     }
     
+    /**
+     * Implements the main purpose of the program
+     */
     public void extract(){
         String text = output.getText();
         
@@ -332,6 +340,9 @@ public class Extracticator extends JFrame{
         }
     }
     
+    /**
+     * Exits the program if the user clicks no, opens save if user clicks yes
+     */
     public void exit(){
         if(!"".equals(output.getText())){
             int n = JOptionPane.showConfirmDialog(
@@ -355,6 +366,9 @@ public class Extracticator extends JFrame{
         }
     }
     
+    /**
+     * Clears the text area after confirmation
+     */
     public void newfile(){
         if(!"".equals(output.getText())){
             int n = JOptionPane.showConfirmDialog(
@@ -365,9 +379,15 @@ public class Extracticator extends JFrame{
                     JOptionPane.YES_NO_OPTION);
             if(n==0){
                 output.setText("");
-                statusbar.setText("Ready");
+                ready();
             }         
+        }else {
+            ready();
         }
+    }
+    
+    public void ready(){
+        statusbar.setText("Ready.");
     }
     
     public void open() {
@@ -386,24 +406,38 @@ public class Extracticator extends JFrame{
         nyi("saveas");
     }
     
+    /**
+     * Selects all the contents of the text area
+     */
     public void selectall(){
         output.selectAll();
         statusbar.setText("Everything is selected!");
     }
     
+    /**
+     * The message displayed when the user clicks on a feature that is nyi
+     * @param type the name of the feature
+     */
     public void nyi(String type){
         String sorry = "Sorry, no " + type + " currently implemented!";
-        statusbar.setText(sorry);
-        JOptionPane.showMessageDialog(jp, sorry,
-                        "Error",JOptionPane.ERROR_MESSAGE);
+        String nyi = "Error";
+        statusbar.setText(nyi + ": " + sorry);
+        JOptionPane.showMessageDialog(jp,sorry,nyi,JOptionPane.ERROR_MESSAGE);
     }
     
     /**
-     * @param args the command line arguments
+     * Creates a new instance of the GUI and sets some options for it
+     * @param args the command line arguments, none implemented
      */
     public static void main(String[] args) {
-        Extracticator ex = new Extracticator();
-        ex.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        final Extracticator ex = new Extracticator();
+        ex.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        ex.addWindowListener(new WindowAdapter(){
+            @Override
+            public void windowClosing(WindowEvent we){
+                ex.exit();
+            }
+        });
         ex.setTitle("Extracticator");
         ex.pack();
         ex.setLocationRelativeTo(null);
