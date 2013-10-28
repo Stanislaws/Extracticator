@@ -324,7 +324,7 @@ public class Extracticator extends JFrame{
                     "Exit?",
                     JOptionPane.YES_NO_CANCEL_OPTION);
             if (n==0){
-                save();
+                saveandexit();
             } 
             else
             if (n==1){
@@ -359,6 +359,9 @@ public class Extracticator extends JFrame{
         }
     }
     
+    /**
+     * Indicates the program is ready in the statusbar
+     */
     public void ready(){
         statusbar.setText("Ready.");
     }
@@ -386,12 +389,19 @@ public class Extracticator extends JFrame{
         }
     }
     
+    /**
+     * Saves the current contents of the text area
+     */
     public void save(){
         int returnVal = fc.showSaveDialog(Extracticator.this);
     }
     
+    /**
+     * Saves the current contents of the text area and then exits
+     */
     public void saveandexit(){
-        
+        int returnVal = fc.showSaveDialog(Extracticator.this);
+        System.exit(0);
     }
     
     /**
@@ -400,17 +410,6 @@ public class Extracticator extends JFrame{
     public void selectall(){
         output.selectAll();
         statusbar.setText("Everything is selected!");
-    }
-    
-    /**
-     * The message displayed when the user clicks on a feature that is nyi
-     * @param type the name of the feature
-     */
-    public void nyi(String type){
-        String sorry = "Sorry, no " + type + " currently implemented!";
-        String nyi = "Error";
-        statusbar.setText(nyi + ": " + sorry);
-        JOptionPane.showMessageDialog(jp,sorry,nyi,JOptionPane.ERROR_MESSAGE);
     }
     
     /**
