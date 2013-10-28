@@ -90,16 +90,6 @@ public class ExtracticatorTest {
     }
 
     /**
-     * Test of options method, of class Extracticator.
-     */
-    @Test
-    public void testOptions() {
-        System.out.println("options");
-        Extracticator instance = new Extracticator();
-        instance.options();
-    }
-
-    /**
      * Test of save method, of class Extracticator.
      */
     @Test
@@ -107,16 +97,6 @@ public class ExtracticatorTest {
         System.out.println("save");
         Extracticator instance = new Extracticator();
         instance.save();
-    }
-
-    /**
-     * Test of saveas method, of class Extracticator.
-     */
-    @Test
-    public void testSaveas() {
-        System.out.println("saveas");
-        Extracticator instance = new Extracticator();
-        instance.saveas();      
     }
 
     /**
