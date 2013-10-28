@@ -19,6 +19,13 @@
 package extracticator;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import javax.swing.*;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.text.DefaultEditorKit;
@@ -28,11 +35,11 @@ import javax.swing.text.DefaultEditorKit;
  * @author Jan Zajaczkowski
  */
 public class Extracticator extends JFrame{
-    private JFileChooser filepick;
-    private final JMenu File, Edit, Process, Tools, Help;
+    private JFileChooser fc;
+    private final JMenu File, Edit, Process, Help;
     private final JMenuBar Bar;
-    private final JMenuItem New, Open, Save, SaveAs, Exit, Cut, Copy, Paste, 
-            SelectAll, About, Extract, Options;
+    private final JMenuItem New, Open, Save, Exit, Cut, Copy, Paste, 
+            SelectAll, About, Extract;
     private final JScrollPane oscroll;
     private final JTextArea output, aoutput;
     
@@ -44,6 +51,8 @@ public class Extracticator extends JFrame{
      * Sets up the GUI and actionable events
      */
     Extracticator(){
+        fc = new JFileChooser();
+        
         statusbar.setOpaque(true);
         statusbar.setBackground(Color.white);
                 
@@ -70,12 +79,6 @@ public class Extracticator extends JFrame{
                 KeyEvent.VK_S, ActionEvent.CTRL_MASK));
         Save.setMnemonic(KeyEvent.VK_S);
         File.add(Save);
-        
-        SaveAs = new JMenuItem("Save As");
-        SaveAs.setAccelerator(KeyStroke.getKeyStroke(
-                KeyEvent.VK_S, ActionEvent.SHIFT_MASK | ActionEvent.CTRL_MASK));
-        SaveAs.setMnemonic(KeyEvent.VK_A);
-        File.add(SaveAs);
         
         File.addSeparator();
         
@@ -133,18 +136,6 @@ public class Extracticator extends JFrame{
         
         Bar.add(Process);
         
-        Tools = new JMenu("Tools");
-        Tools.setMnemonic(KeyEvent.VK_T);
-        
-        Options = new JMenuItem("Options");
-        Options.setAccelerator(
-                KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.CTRL_MASK));
-        Options.setMnemonic(KeyEvent.VK_O);
-        
-        Tools.add(Options);
-        
-        Bar.add(Tools);
-        
         Help = new JMenu("Help");
         Help.setMnemonic(KeyEvent.VK_H);
         
@@ -159,7 +150,7 @@ public class Extracticator extends JFrame{
         aoutput = new JTextArea(10,5);
         
         output = new JTextArea(25,50);
-        output.setLineWrap(true);
+        //output.setLineWrap(true);
         
         oscroll = new JScrollPane(output);
         jp.add(oscroll, BorderLayout.CENTER);
@@ -196,15 +187,6 @@ public class Extracticator extends JFrame{
             
         });
         
-        SaveAs.addActionListener(new ActionListener(){
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                saveas();
-            }
-            
-        });
-        
         Exit.addActionListener(new ActionListener(){
 
             @Override
@@ -228,15 +210,6 @@ public class Extracticator extends JFrame{
             @Override
             public void actionPerformed(ActionEvent e) {
                 extract();
-            }
-            
-        });
-        
-        Options.addActionListener(new ActionListener(){
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                options();
             }
             
         });
@@ -390,20 +363,35 @@ public class Extracticator extends JFrame{
         statusbar.setText("Ready.");
     }
     
+    /**
+     * Opens a file using a JFileChooser and a unbuffered stream
+     */
     public void open() {
-        nyi("open");
-    }
-    
-    public void options() {
-        nyi("options");
+        int returnVal = fc.showOpenDialog(Extracticator.this);
+        if(returnVal == JFileChooser.APPROVE_OPTION){
+            File f = fc.getSelectedFile();
+            Path file = f.toPath();
+            try (InputStream in = Files.newInputStream(file);
+                BufferedReader reader =
+                  new BufferedReader(new InputStreamReader(in))) {
+                String line;
+                output.setText("");
+                while ((line = reader.readLine()) != null) {
+                    output.append(line + "\n");
+                }
+            } catch (IOException x) {
+                JOptionPane.showMessageDialog(jp,x,"Error!"
+                        ,JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }
     
     public void save(){
-        nyi("save");
+        int returnVal = fc.showSaveDialog(Extracticator.this);
     }
     
-    public void saveas(){
-        nyi("saveas");
+    public void saveandexit(){
+        
     }
     
     /**
@@ -443,8 +431,6 @@ public class Extracticator extends JFrame{
         ex.setLocationRelativeTo(null);
         ex.setVisible(true);
         ex.setResizable(false);
-        UIManager.put("OptionPane.background",new ColorUIResource(255,255,255));
-        UIManager.put("Panel.background",new ColorUIResource(255,255,255));
     }
     
 }
