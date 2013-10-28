@@ -27,15 +27,14 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import javax.swing.*;
-import javax.swing.plaf.ColorUIResource;
 import javax.swing.text.DefaultEditorKit;
 
 /**
- *
+ * extracts email addresses from mailing lists
  * @author Jan Zajaczkowski
  */
 public class Extracticator extends JFrame{
-    private JFileChooser fc;
+    private final JFileChooser fc;
     private final JMenu File, Edit, Process, Help;
     private final JMenuBar Bar;
     private final JMenuItem New, Open, Save, Exit, Cut, Copy, Paste, 
@@ -46,6 +45,8 @@ public class Extracticator extends JFrame{
     private final JLabel statusbar = new JLabel("Ready");
     
     private final JPanel jp = new JPanel();
+    
+    private boolean SavedBeforeExit = false;
     
     /**
      * Sets up the GUI and actionable events
@@ -318,23 +319,30 @@ public class Extracticator extends JFrame{
      */
     public void exit(){
         if(!"".equals(output.getText())){
-            int n = JOptionPane.showConfirmDialog(
-                    jp,
-                    "Would you like to save your work before exiting?",
-                    "Exit?",
-                    JOptionPane.YES_NO_CANCEL_OPTION);
-            if (n==0){
-                saveandexit();
-            } 
-            else
-            if (n==1){
-                System.exit(0);
-            } 
+            if(!SavedBeforeExit){
+                int n = JOptionPane.showConfirmDialog(
+                        jp,
+                        "Would you like to save your work before exiting?",
+                        "Exit?",
+                        JOptionPane.YES_NO_CANCEL_OPTION);
+                if (n==0){
+                    //YES OPTION
+                    SavedBeforeExit=true;
+                    save();
+                } 
+                else
+                if (n==1){
+                    //NO OPTION
+                    System.exit(0);
+                } 
+                else {
+                    //CANCEL OPTION
+                } 
+            }
             else {
-
-            } 
-        }
-        else {
+                System.exit(0);
+            }
+        } else {
             System.exit(0);
         }
     }
@@ -394,14 +402,7 @@ public class Extracticator extends JFrame{
      */
     public void save(){
         int returnVal = fc.showSaveDialog(Extracticator.this);
-    }
-    
-    /**
-     * Saves the current contents of the text area and then exits
-     */
-    public void saveandexit(){
-        int returnVal = fc.showSaveDialog(Extracticator.this);
-        System.exit(0);
+        statusbar.setText("Saved to: NYI");
     }
     
     /**
