@@ -108,18 +108,7 @@ public class ExtracticatorTest {
         Extracticator instance = new Extracticator();
         instance.selectall();    
     }
-
-    /**
-     * Test of nyi method, of class Extracticator.
-     */
-    @Test
-    public void testNyi() {
-        System.out.println("nyi");
-        String type = "";
-        Extracticator instance = new Extracticator();
-        instance.nyi(type);      
-    }
-
+    
     /**
      * Test of main method, of class Extracticator.
      */
