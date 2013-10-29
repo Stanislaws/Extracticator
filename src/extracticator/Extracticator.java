@@ -21,12 +21,17 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.text.DefaultEditorKit;
 
 /**
@@ -223,6 +228,25 @@ public class Extracticator extends JFrame{
             }
             
         });
+        
+        output.getDocument().addDocumentListener(new DocumentListener(){
+            //flag as unsaved if you insert into the text area
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                SavedBeforeExit = false;
+            }
+            //flag as unsaved if you remove from the text area
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                SavedBeforeExit = false;
+            }
+            //flag as unsaved if you change the contents of the text area
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                SavedBeforeExit = false;
+            }
+            
+        });
     }
     
     /**
@@ -359,16 +383,20 @@ public class Extracticator extends JFrame{
                     "New?",
                     JOptionPane.YES_NO_OPTION);
             if(n==0){
+                //Yes
                 output.setText("");
                 ready();
-            }         
+            }
+            if(n==1){
+                //No
+            }
         }else {
             ready();
         }
     }
     
     /**
-     * Indicates the program is ready in the statusbar
+     * Indicates the program is ready in the status bar
      */
     public void ready(){
         statusbar.setText("Ready.");
@@ -401,8 +429,15 @@ public class Extracticator extends JFrame{
      * Saves the current contents of the text area
      */
     public void save(){
-        int returnVal = fc.showSaveDialog(Extracticator.this);
-        statusbar.setText("Saved to: NYI");
+        fc.showSaveDialog(Extracticator.this);
+        try(FileWriter fw = new FileWriter(fc.getSelectedFile())){
+            fw.write(output.getText().toString());
+            fw.flush();
+            fw.close();
+            SavedBeforeExit = true;
+        } catch (IOException ex) {
+            statusbar.setText(ex.toString());
+        }
     }
     
     /**
