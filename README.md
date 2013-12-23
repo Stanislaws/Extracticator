@@ -2,6 +2,7 @@ Extracticator
 =============
 
 extracts email addresses from mailing lists
+
 Copyright (C) 2013  Jan Zajaczkowski
 
 This program is free software: you can redistribute it and/or modify
