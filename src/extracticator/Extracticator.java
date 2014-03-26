@@ -1,6 +1,6 @@
 /*
  *  Extracticator - extracts email addresses from mailing lists
- *  Copyright © 2013 Jan Zajaczkowski
+ *  Copyright © 2014 Jan Zajaczkowski
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -312,19 +312,33 @@ public class Extracticator extends JFrame{
         
         else {
             output.setText("");
+            String emails[] = null;
             
-            //create array of emails for between every ;
-            String emails[] = text.split(";");
+            //create array of emails for between every ; or new line
+            if(text.lastIndexOf(";")==-1){
+                emails = text.split("\n");
+            }else{
+                emails = text.split(";");
+            }
+            
             
             int badcount = 0;
             
             
             for (String email : emails) {
+                String line = "";
+                String first = "";
+                String last = "";
+                
                 //skip if the segment doesn't have an email
                 if(email.indexOf("<")!=-1&&email.indexOf(">")!=-1){
+                    line = email.substring(email.indexOf("<") 
+                        + 1, email.indexOf(">"));
+                    first = line.substring(0, line.indexOf("."));
+                    last = line.substring(line.indexOf(".")+1,line.indexOf("@"));
+                    
                     //append the contents between < and >
-                    output.append(email.substring(email.indexOf("<") 
-                        + 1, email.indexOf(">")) + "\n");
+                    output.append(last+","+first+","+line+"\n");
                 }
                 else {
                     //add to badcount if line doesn't have an email
@@ -417,7 +431,7 @@ public class Extracticator extends JFrame{
                 output.setText("");
                 while ((line = reader.readLine()) != null) {
                     output.append(line + "\n");
-                }
+                }               
             } catch (IOException x) {
                 JOptionPane.showMessageDialog(jp,x,"Error!"
                         ,JOptionPane.ERROR_MESSAGE);
