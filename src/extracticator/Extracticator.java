@@ -1,6 +1,6 @@
 /*
  *  Extracticator - extracts email addresses from mailing lists
- *  Copyright © 2014 Jan Zajaczkowski
+ *  Copyright © 2013 Jan Zajaczkowski
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,46 +19,31 @@
 package extracticator;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
+import javax.swing.plaf.ColorUIResource;
 import javax.swing.text.DefaultEditorKit;
 
 /**
- * extracts email addresses from mailing lists
+ *
  * @author Jan Zajaczkowski
  */
 public class Extracticator extends JFrame{
-    private final JFileChooser fc;
-    private final JMenu File, Edit, Process, Help;
+    private JFileChooser filepick;
+    private final JMenu File, Edit, Process, Tools, Help;
     private final JMenuBar Bar;
-    private final JMenuItem New, Open, Save, Exit, Cut, Copy, Paste, 
-            SelectAll, About, Extract;
+    private final JMenuItem New, Open, Save, SaveAs, Exit, Cut, Copy, Paste, 
+            SelectAll, About, Extract, Options;
     private final JScrollPane oscroll;
-    private final JTextArea output, aoutput;
+    private JTextArea output, aoutput;
     
     private final JLabel statusbar = new JLabel("Ready");
     
     private final JPanel jp = new JPanel();
     
-    private boolean SavedBeforeExit = false;
-    
-    /**
-     * Sets up the GUI and actionable events
-     */
     Extracticator(){
-        fc = new JFileChooser();
-        
         statusbar.setOpaque(true);
         statusbar.setBackground(Color.white);
                 
@@ -85,6 +70,12 @@ public class Extracticator extends JFrame{
                 KeyEvent.VK_S, ActionEvent.CTRL_MASK));
         Save.setMnemonic(KeyEvent.VK_S);
         File.add(Save);
+        
+        SaveAs = new JMenuItem("Save As");
+        SaveAs.setAccelerator(KeyStroke.getKeyStroke(
+                KeyEvent.VK_S, ActionEvent.SHIFT_MASK | ActionEvent.CTRL_MASK));
+        SaveAs.setMnemonic(KeyEvent.VK_A);
+        File.add(SaveAs);
         
         File.addSeparator();
         
@@ -142,6 +133,18 @@ public class Extracticator extends JFrame{
         
         Bar.add(Process);
         
+        Tools = new JMenu("Tools");
+        Tools.setMnemonic(KeyEvent.VK_T);
+        
+        Options = new JMenuItem("Options");
+        Options.setAccelerator(
+                KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.CTRL_MASK));
+        Options.setMnemonic(KeyEvent.VK_O);
+        
+        Tools.add(Options);
+        
+        Bar.add(Tools);
+        
         Help = new JMenu("Help");
         Help.setMnemonic(KeyEvent.VK_H);
         
@@ -153,10 +156,8 @@ public class Extracticator extends JFrame{
         
         Bar.add(Help);
         
-        aoutput = new JTextArea(10,5);
-        
         output = new JTextArea(25,50);
-        //output.setLineWrap(true);
+        output.setLineWrap(true);
         
         oscroll = new JScrollPane(output);
         jp.add(oscroll, BorderLayout.CENTER);
@@ -193,6 +194,15 @@ public class Extracticator extends JFrame{
             
         });
         
+        SaveAs.addActionListener(new ActionListener(){
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                saveas();
+            }
+            
+        });
+        
         Exit.addActionListener(new ActionListener(){
 
             @Override
@@ -220,6 +230,15 @@ public class Extracticator extends JFrame{
             
         });
         
+        Options.addActionListener(new ActionListener(){
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                options();
+            }
+            
+        });
+        
         About.addActionListener(new ActionListener(){
 
             @Override
@@ -228,32 +247,10 @@ public class Extracticator extends JFrame{
             }
             
         });
-        
-        output.getDocument().addDocumentListener(new DocumentListener(){
-            //flag as unsaved if you insert into the text area
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                SavedBeforeExit = false;
-            }
-            //flag as unsaved if you remove from the text area
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                SavedBeforeExit = false;
-            }
-            //flag as unsaved if you change the contents of the text area
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                SavedBeforeExit = false;
-            }
-            
-        });
     }
     
-    /**
-     * Shows information about the author and the license
-     */
     public void about(){
-        
+        aoutput = new JTextArea(10,5);
         aoutput.setEditable(false);
         aoutput.setText("Extracticator - extracts email addresses from "
                         + "mailing lists\n" +
@@ -283,9 +280,6 @@ public class Extracticator extends JFrame{
                 JOptionPane.PLAIN_MESSAGE);        
     }
     
-    /**
-     * Implements the main purpose of the program
-     */
     public void extract(){
         String text = output.getText();
         
@@ -312,33 +306,19 @@ public class Extracticator extends JFrame{
         
         else {
             output.setText("");
-            String emails[] = null;
             
-            //create array of emails for between every ; or new line
-            if(text.lastIndexOf(";")==-1){
-                emails = text.split("\n");
-            }else{
-                emails = text.split(";");
-            }
-            
+            //create array of emails for between every ;
+            String emails[] = text.split(";");
             
             int badcount = 0;
             
             
             for (String email : emails) {
-                String line = "";
-                String first = "";
-                String last = "";
-                
                 //skip if the segment doesn't have an email
                 if(email.indexOf("<")!=-1&&email.indexOf(">")!=-1){
-                    line = email.substring(email.indexOf("<") 
-                        + 1, email.indexOf(">"));
-                    first = line.substring(0, line.indexOf("."));
-                    last = line.substring(line.indexOf(".")+1,line.indexOf("@"));
-                    
                     //append the contents between < and >
-                    output.append(last+","+first+","+line+"\n");
+                    output.append(email.substring(email.indexOf("<") 
+                        + 1, email.indexOf(">")) + "\n");
                 }
                 else {
                     //add to badcount if line doesn't have an email
@@ -352,42 +332,29 @@ public class Extracticator extends JFrame{
         }
     }
     
-    /**
-     * Exits the program if the user clicks no, opens save if user clicks yes
-     */
     public void exit(){
         if(!"".equals(output.getText())){
-            if(!SavedBeforeExit){
-                int n = JOptionPane.showConfirmDialog(
-                        jp,
-                        "Would you like to save your work before exiting?",
-                        "Exit?",
-                        JOptionPane.YES_NO_CANCEL_OPTION);
-                if (n==0){
-                    //YES OPTION
-                    SavedBeforeExit=true;
-                    save();
-                } 
-                else
-                if (n==1){
-                    //NO OPTION
-                    System.exit(0);
-                } 
-                else {
-                    //CANCEL OPTION
-                } 
-            }
-            else {
+            int n = JOptionPane.showConfirmDialog(
+                    jp,
+                    "Would you like to save your work before exiting?",
+                    "Exit?",
+                    JOptionPane.YES_NO_CANCEL_OPTION);
+            if (n==0){
+                save();
+            } 
+            else
+            if (n==1){
                 System.exit(0);
-            }
-        } else {
+            } 
+            else {
+
+            } 
+        }
+        else {
             System.exit(0);
         }
     }
     
-    /**
-     * Clears the text area after confirmation
-     */
     public void newfile(){
         if(!"".equals(output.getText())){
             int n = JOptionPane.showConfirmDialog(
@@ -397,89 +364,53 @@ public class Extracticator extends JFrame{
                     "New?",
                     JOptionPane.YES_NO_OPTION);
             if(n==0){
-                //Yes
                 output.setText("");
-                ready();
-            }
-            if(n==1){
-                //No
-            }
-        }else {
-            ready();
+                statusbar.setText("Ready");
+            }         
         }
     }
     
-    /**
-     * Indicates the program is ready in the status bar
-     */
-    public void ready(){
-        statusbar.setText("Ready.");
-    }
-    
-    /**
-     * Opens a file using a JFileChooser and a unbuffered stream
-     */
     public void open() {
-        int returnVal = fc.showOpenDialog(Extracticator.this);
-        if(returnVal == JFileChooser.APPROVE_OPTION){
-            File f = fc.getSelectedFile();
-            Path file = f.toPath();
-            try (InputStream in = Files.newInputStream(file);
-                BufferedReader reader =
-                  new BufferedReader(new InputStreamReader(in))) {
-                String line;
-                output.setText("");
-                while ((line = reader.readLine()) != null) {
-                    output.append(line + "\n");
-                }               
-            } catch (IOException x) {
-                JOptionPane.showMessageDialog(jp,x,"Error!"
-                        ,JOptionPane.ERROR_MESSAGE);
-            }
-        }
+        nyi("open");
     }
     
-    /**
-     * Saves the current contents of the text area
-     */
+    public void options() {
+        nyi("options");
+    }
+    
     public void save(){
-        fc.showSaveDialog(Extracticator.this);
-        try(FileWriter fw = new FileWriter(fc.getSelectedFile())){
-            fw.write(output.getText().toString());
-            fw.flush();
-            fw.close();
-            SavedBeforeExit = true;
-        } catch (IOException ex) {
-            statusbar.setText(ex.toString());
-        }
+        nyi("save");
     }
     
-    /**
-     * Selects all the contents of the text area
-     */
+    public void saveas(){
+        nyi("saveas");
+    }
+    
     public void selectall(){
         output.selectAll();
         statusbar.setText("Everything is selected!");
     }
     
+    public void nyi(String type){
+        String sorry = "Sorry, no " + type + " currently implemented!";
+        statusbar.setText(sorry);
+        JOptionPane.showMessageDialog(jp, sorry,
+                        "Error",JOptionPane.ERROR_MESSAGE);
+    }
+    
     /**
-     * Creates a new instance of the GUI and sets some options for it
-     * @param args the command line arguments, none implemented
+     * @param args the command line arguments
      */
     public static void main(String[] args) {
-        final Extracticator ex = new Extracticator();
-        ex.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-        ex.addWindowListener(new WindowAdapter(){
-            @Override
-            public void windowClosing(WindowEvent we){
-                ex.exit();
-            }
-        });
+        Extracticator ex = new Extracticator();
+        ex.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         ex.setTitle("Extracticator");
         ex.pack();
         ex.setLocationRelativeTo(null);
         ex.setVisible(true);
         ex.setResizable(false);
+        UIManager.put("OptionPane.background",new ColorUIResource(255,255,255));
+        UIManager.put("Panel.background",new ColorUIResource(255,255,255));
     }
     
 }
